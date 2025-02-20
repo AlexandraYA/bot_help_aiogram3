@@ -1,10 +1,11 @@
 from aiogram import Dispatcher
+from aiogram.fsm.storage.redis import RedisStorage
 
-from loader import dp
 from .throttling import ThrottlingMiddleware
 from .support_middleware import SupportMiddleware
 
 
-if __name__ == "middlewares":
-    dp.middleware.setup(ThrottlingMiddleware())
-    dp.middleware.setup(SupportMiddleware())
+def register_middlewares(dp: Dispatcher):
+   # storageThrottling = RedisStorage.from_url('redis://localhost:6379/0')
+   # dp.message.middleware.register(ThrottlingMiddleware(storage=storageThrottling))
+    dp.message.middleware.register(SupportMiddleware())

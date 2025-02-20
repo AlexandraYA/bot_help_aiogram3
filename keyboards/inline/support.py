@@ -1,20 +1,39 @@
 import random
 
+from aiogram.fsm.context import FSMContext
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.utils.callback_data import CallbackData
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.filters.callback_data import CallbackData
+from aiogram.fsm.storage.memory import StorageKey
 
 from data.config import support_ids
-from loader import dp
+from loader import dp, bot
 
-support_callback = CallbackData("ask_support", "messages", "user_id", "as_user")
-cancel_support_callback = CallbackData("cancel_support", "user_id")
+class StartSupCallback(CallbackData, prefix="start"):
+    call: str
+    messages: str
+    user_id: int
+    as_user: str
 
+class CancelSupCallback(CallbackData, prefix="cancel"):
+    call: str
+    user_id: int
 
 async def check_support_available(support_id):
-    state = dp.current_state(chat=support_id, user=support_id)
+    # state = bot.current_state(chat=support_id, user=support_id)
+
+    state: FSMContext = FSMContext(
+            #bot=bot,  # объект бота
+            storage=dp.storage,  # dp - экземпляр диспатчера
+            key=StorageKey(
+                chat_id=support_id,  # если юзер в ЛС, то chat_id=user_id
+                user_id=support_id,
+                bot_id=bot.id))
+
     state_str = str(
         await state.get_state()
     )
+
     if state_str == "in_support":
         return
     else:
@@ -25,16 +44,18 @@ async def get_support_manager():
     random.shuffle(support_ids)
     for support_id in support_ids:
         # Проверим если оператор в данное время не занят
+        print(f'support_id {support_id}')
         support_id = await check_support_available(support_id)
 
         # Если такого нашли, что выводим
-        if support_id:
-            return support_id
+    if support_id:
+        return support_id
     else:
         return
 
 
 async def support_keyboard(messages, user_id=None):
+    
     if user_id:
         # Есле указан второй айдишник - значит эта кнопка для оператора
 
@@ -59,29 +80,25 @@ async def support_keyboard(messages, user_id=None):
         else:
             text = "Написать оператору"
 
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(
-        InlineKeyboardButton(
+
+
+    builder = InlineKeyboardBuilder()
+    builder.button(
             text=text,
-            callback_data=support_callback.new(
+            callback_data=StartSupCallback(
+                call='ask_support',
                 messages=messages,
                 user_id=contact_id,
-                as_user=as_user
-            )
-        )
+                as_user=as_user).pack()
     )
 
     if messages == "many":
         # Добавляем кнопку завершения сеанса, если передумали звонить в поддержку
-        keyboard.add(
-            InlineKeyboardButton(
+        builder.button(
                 text="Завершить сеанс",
-                callback_data=cancel_support_callback.new(
-                    user_id=contact_id
-                )
-            )
+                callback_data=CancelSupCallback(call='cancel_support', user_id=contact_id).pack()
         )
-    return keyboard
+    return builder.as_markup()
 
 
 def cancel_support(user_id):
@@ -90,9 +107,7 @@ def cancel_support(user_id):
             [
                 InlineKeyboardButton(
                     text="Завершить сеанс",
-                    callback_data=cancel_support_callback.new(
-                        user_id=user_id
-                    )
+                    callback_data=CancelSupCallback(call='cancel_support', user_id=user_id).pack()
                 )
             ]
         ]

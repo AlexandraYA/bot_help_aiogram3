@@ -1,31 +1,36 @@
-from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Command
+from aiogram import Router, F
+from aiogram.types import Message, CallbackQuery, ContentType
+from aiogram.fsm.context import FSMContext
+from aiogram.filters import Command
+from utils import SupportStates
 
-from keyboards.inline.support import support_keyboard, support_callback
-from loader import dp, bot
+from keyboards.inline.support import support_keyboard, StartSupCallback
+from loader import bot
 
 
-@dp.message_handler(Command("support"))
-async def ask_support(message: types.Message):
+async def ask_support(message: Message):
     text = "Хотите написать сообщение техподдержке? Нажмите на кнопку ниже!"
     keyboard = await support_keyboard(messages="one")
     await message.answer(text, reply_markup=keyboard)
 
 
-@dp.callback_query_handler(support_callback.filter(messages="one"))
-async def send_to_support(call: types.CallbackQuery, state: FSMContext, callback_data: dict):
+async def send_to_support(call: CallbackQuery, state: FSMContext, callback_data: StartSupCallback):
     await call.answer()
-    user_id = int(callback_data.get("user_id"))
+    user_id = int(callback_data.user_id)
 
     await call.message.answer("Пришлите ваше сообщение, которым вы хотите поделиться")
-    await state.set_state("wait_for_support_message")
+    await state.set_state(SupportStates.wait_for_support_message)
     await state.update_data(second_id=user_id)
 
 
-@dp.message_handler(state="wait_for_support_message", content_types=types.ContentTypes.ANY)
-async def get_support_message(message: types.Message, state: FSMContext):
+async def get_support_message(message: Message, state: FSMContext):
     data = await state.get_data()
+    print(data)
+ 
+    curr_state = str(
+        await state.get_state()
+    )
+    print(curr_state)
     second_id = data.get("second_id")
 
     await bot.send_message(second_id,
@@ -34,4 +39,11 @@ async def get_support_message(message: types.Message, state: FSMContext):
     await message.copy_to(second_id, reply_markup=keyboard)
 
     await message.answer("Вы отправили это сообщение!")
-    await state.reset_state()
+    await state.clear()
+
+
+def router(router: Router):
+    router.message.register(get_support_message, SupportStates.wait_for_support_message)
+    router.message.register(ask_support, Command(commands="support"))
+
+    router.callback_query.register(send_to_support, StartSupCallback.filter(F.messages == "one"))

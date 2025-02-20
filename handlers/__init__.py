@@ -1,4 +1,2 @@
-from .errors import dp
-from .users import dp
-
-__all__ = ["dp"]
+# from .errors import dp
+from .users import register_routers

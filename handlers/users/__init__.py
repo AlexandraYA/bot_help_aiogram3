@@ -1,7 +1,16 @@
-from .support import dp
-from .support_call import dp
-from .help import dp
-from .start import dp
-from .echo import dp
+from . import (
+    support,
+    support_call,
+    help,
+    start,
+    echo
+)
+from aiogram import Router
 
-__all__ = ["dp"]
+
+def register_routers(rt: Router):
+    start.router(rt)
+    support.router(rt)
+    support_call.router(rt)
+    help.router(rt)
+    echo.router(rt)

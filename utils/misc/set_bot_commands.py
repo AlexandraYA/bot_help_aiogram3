@@ -1,10 +1,11 @@
-from aiogram import types
+from aiogram import Bot
+from aiogram.types import BotCommand
 
 
-async def set_default_commands(dp):
-    await dp.bot.set_my_commands([
-        types.BotCommand("start", "Запустить бота"),
-        types.BotCommand("support", "Написать сообщение техподдержку"),
-        types.BotCommand("support_call", "Пообщаться с техподдержкой"),
-        types.BotCommand("help", "Помощь"),
+async def set_default_commands(bot: Bot):
+    await bot.set_my_commands(commands=[
+        BotCommand(command="start", description="Запустить бота"),
+        BotCommand(command="support", description="Написать сообщение техподдержку"),
+        BotCommand(command="support_call", description="Пообщаться с техподдержкой"),
+        BotCommand(command="help", description="Помощь"),
     ])
