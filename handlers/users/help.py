@@ -5,8 +5,9 @@ from aiogram.filters import Command
 
 async def bot_help(message: Message):
     text = ("Список команд: ",
-            "/start - Начать диалог",
-            "/help - Получить справку")
+            "/start - Запустить бота",
+            "/support - Написать в техподдержку",
+            "/help - Список команд")
     
     await message.answer("\n".join(text))
 

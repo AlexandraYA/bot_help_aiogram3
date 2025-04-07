@@ -20,9 +20,6 @@ class SupportMiddleware(BaseMiddleware):
                      event: Message,
                      data: Dict[str, Any]
                      ) -> Any:
-        
-        print(f'SupportMiddleware START')
-        
         # Для начала достанем состояние текущего пользователя,
         # так как state: FSMContext нам сюда не прилетит
         state: FSMContext = FSMContext(
@@ -36,10 +33,7 @@ class SupportMiddleware(BaseMiddleware):
         # Получим строчное значение стейта и сравним его
         state_name = await state.get_state()
 
-        print(f'SupportMiddleware {state_name}')
-
         if state_name == SupportStates.in_support:
-
             # Заберем айди второго пользователя и отправим ему сообщение
             data = await state.get_data()
             second_id = data.get("second_id")

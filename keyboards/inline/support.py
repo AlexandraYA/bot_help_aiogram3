@@ -44,7 +44,6 @@ async def get_support_manager():
     random.shuffle(support_ids)
     for support_id in support_ids:
         # Проверим если оператор в данное время не занят
-        print(f'support_id {support_id}')
         support_id = await check_support_available(support_id)
 
         # Если такого нашли, что выводим
